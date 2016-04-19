@@ -12,6 +12,7 @@ namespace HRQLS;
 
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
+use HRQLS\Controllers\ModulesController;
 use HRQLS\Models\ElasticSearchServiceProvider;
 use HRQLS\Models\GuzzleProvider;
 use Monolog\Logger;
@@ -69,6 +70,13 @@ class Bootstrap
     private $logger;
 
     /**
+     * The Module System that loads all the endpoints.
+     *
+     * @var ModuleController
+     */
+    private $moduleSystem;
+
+    /**
      * The primary bootstrap for the application.
      *
      * Using dependency injection, this constructor takes a Silex\Application instance
@@ -115,6 +123,15 @@ class Bootstrap
         $this->config = [];
 
         $this->config = json_decode(file_get_contents(__DIR__ . '/config/Hercules.json'));
+    }
+
+    /**
+     *
+     */
+    public function loadModules()
+    {
+        $this->moduleSystem = new ModulesController();
+        $this->moduleSystem->loadModules();
     }
 
     /**

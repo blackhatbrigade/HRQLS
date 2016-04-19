@@ -6,6 +6,8 @@ $bootstrap = new HRQLS\Bootstrap(new Silex\Application());
 
 $bootstrap->loadConfig();
 
+$bootstrap->loadModules();
+
 $bootstrap->startRenderEngine();
 
 $bootstrap->connectDatabases();

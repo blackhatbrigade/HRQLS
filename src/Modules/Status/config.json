@@ -1,0 +1,14 @@
+{
+  "author": "Jason Bennett",
+  "description": "This module shows what modules are currently loaded in the hercules instance.",
+  "module_uri": "/status",
+  "module_name": "Status Module",
+  "routes": [
+    { 
+      "url": "/status",
+      "controller": "Controllers\\Main"
+    }
+  ],
+  "module_config": {},
+  "data": {}
+}
