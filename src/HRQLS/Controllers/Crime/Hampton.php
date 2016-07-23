@@ -34,6 +34,13 @@ final class Hampton
      * @var array
      */
     private $types = ['crimes'];
+    
+    /**
+     * Default Location array for the City of Hampton.
+     *
+     * @var array
+     */
+    private $defaultCoordinates = ['lat' => 37.0450412, 'lon' => -76.4309788];
 
     /**
      * Main entry point for City of Hampton Crime Endpoint.
@@ -58,64 +65,12 @@ final class Hampton
     public function main(Request $req, Application $app)
     {
         $response = new HerculesResponse('/crime/Hampton');
-
-        $this->refreshStaleData($app, new \DateTime());
-
         $esResult = $app['elasticsearch']->search($this->indices, [], []);
 
         $response = $this->parseResults($esResult, $response);
 
-        // The frontend expects a JSONP format, to do this the response must
-        // be wrapped in a callback.
+        // The frontend expects a JSONP format, to do this the response must be wrapped in a callback.
         return $_GET['callback'] . '('.$response->to_json().')';
-    }
-
-    /**
-     * Gets exactly one crime datapoint.
-     *
-     * @param Request     $req The Request object to be handled.
-     * @param Application $app Silex Application object responsible for handling requests.
-     *
-     * @return \HRQLS\Controllers\Crime\DataPoint
-     */
-    public function get(Request $req, Application $app)
-    {
-        //@TODO fix the return statement cause that's hella busted.
-        return new DataPoint('', '', '', new DateTime(), '', []);
-    }
-
-    /**
-     * Refreshes the Hampton Crime Data stored in ES if $timestamp >= NextRefreshTimestamp for this endpoint.
-     *
-     * @param Application $app       Silex Application used to handle refreshing data.
-     * @param \DateTime   $timestamp The timestamp of the current request.
-     *
-     * @return void
-     */
-    private function refreshStaleData(Application $app, \DateTime $timestamp)
-    {
-        //TODO We may need to bootstrap the $app so the service providers are there.
-        $query = [
-            'query' => [
-                'match' => ['endpoint' => '/crime/Hampton']
-            ]
-        ];
-        
-        $response = $app['elasticsearch']->search(['crime'], ['refresh-timestamps'], $query);
-        
-        //If timestamp is before the next refresh epoch we don't need to update stale data.
-        if ($timestamp < $app['elasticsearch']->getResults($response)[0]['next_refresh_epoch']) {
-            return;
-        }
-
-        $crimes = json_decode(file_get_contents('https://data.hampton.gov/resource/umc3-tsey.json'));
-        
-        foreach ($crimes as $crime) {
-            echo json_encode($app['geocode']->geocode($crime->address));
-            exit;
-            //$app['geocode']->geocode();
-            continue;
-        }
     }
 
     /**
@@ -139,7 +94,7 @@ final class Hampton
             $location = $value['_source']['location'];
 
             if (isset($occured) && gettype($location) === 'array') {
-                $datapoint = new DataPoint($offense, $category, $class, $occured, $city, $location);
+                $datapoint = new DataPoint($offense, $occured, $city, $location, $category, $class);
                 $response->addDataEntry($datapoint->toArray());
             }
         }
